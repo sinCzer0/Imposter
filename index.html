@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Imposter Party – Browser Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #05030f;
+      --fg: #f5f3ff;
+      --accent: #ff6b4a;
+      --accent-soft: #ffb85c;
+      --card: rgba(12, 10, 30, 0.9);
+      --muted: #8d8aa8;
+      --danger: #ff3366;
+      --success: #34d399;
+      --radius-lg: 22px;
+      --radius-md: 14px;
+      --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.55);
+      --blur: 22px;
+      --transition-fast: 0.18s ease-out;
+      --transition-med: 0.25s ease-out;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      color: var(--fg);
+      background: radial-gradient(circle at 10% 0%, #2d1b69 0, transparent 55%),
+                  radial-gradient(circle at 90% 100%, #ff4b4b 0, transparent 55%),
+                  radial-gradient(circle at 10% 100%, #00f5a0 0, transparent 55%),
+                  #05030f;
+      font-family: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      overflow-x: hidden;
+    }
+
+    /* Subtle animated grain */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: -50px;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='noStitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.12'/%3E%3C/svg%3E");
+      mix-blend-mode: soft-light;
+      pointer-events: none;
+      animation: grain 14s steps(4) infinite;
+      z-index: -1;
+    }
+
+    @keyframes grain {
+      0%, 100% { transform: translate3d(0,0,0); }
+      25% { transform: translate3d(-15px,-8px,0); }
+      50% { transform: translate3d(9px,12px,0); }
+      75% { transform: translate3d(-5px,6px,0); }
+    }
+
+    .app-shell {
+      width: min(960px, 100%);
+      max-height: 100vh;
+      background: radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.12), transparent 55%),
+                  radial-gradient(circle at 100% 100%, rgba(255, 255, 255, 0.08), transparent 55%),
+                  rgba(5, 3, 20, 0.9);
+      border-radius: 28px;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(var(--blur));
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2.1fr);
+      overflow: hidden;
+      position: relative;
+      isolation: isolate;
+    }
+
+    @media (max-width: 780px) {
+      .app-shell {
+        display: block;
+        max-height: none;
+      }
+    }
+
+    .app-main {
+      padding: 24px 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .app-aside {
+      background: radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.15), transparent 55%),
+                  linear-gradient(145deg, rgba(32, 24, 84, 0.9), rgba(7, 3, 25, 0.98));
+      padding: 22px 22px 18px;
+      border-left: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    @media (max-width: 780px) {
+      .app-aside {
+        border-left: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+      }
+    }
+
+    header.app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      background:
+        conic-gradient(from 180deg, #ff6b4a, #ffb85c, #00f5a0, #5b8dff, #ff6b4a);
+      padding: 2px;
+      position: relative;
+    }
+
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border-radius: inherit;
+      background: radial-gradient(circle at 30% 10%, rgba(255,255,255,0.6), transparent 45%),
+                  radial-gradient(circle at 70% 80%, rgba(255,107,74,0.5), transparent 55%),
+                  #05030f;
+    }
+
+    .brand-text h1 {
+      margin: 0;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      font-size: clamp(1.35rem, 2.3vw, 1.65rem);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .brand-text span {
+      display: block;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+    }
+
+    .chip {
+      border-radius: 999px;
+      padding: 4px 10px;
+      border: 1px solid rgba(255,255,255,0.16);
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, var(--accent-soft), var(--accent));
+      box-shadow: 0 0 0 4px rgba(255, 107, 74, 0.15);
+    }
+
+    /* SCREEN CONTAINERS */
+    .screen {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      gap: 18px;
+      margin-top: 4px;
+    }
+    .screen.active {
+      display: flex;
+    }
+
+    .card-panel {
+      background: radial-gradient(circle at 0 0, rgba(255,255,255,0.04), transparent 60%),
+                  linear-gradient(145deg, rgba(17, 13, 52, 0.96), rgba(7, 3, 25, 0.96));
+      border-radius: var(--radius-lg);
+      padding: 18px 18px 16px;
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: 0 14px 32px rgba(0,0,0,0.6);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 0 0, rgba(255,255,255,0.12), transparent 55%);
+      mix-blend-mode: soft-light;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .card-header h2,
+    .card-header h3 {
+      margin: 0;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 0.95rem;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .card-header span.sub {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+
+    label {
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .field {
+      margin-bottom: 12px;
+    }
+
+    .field-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .field small {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    select,
+    input[type="number"],
+    input[type="text"] {
+      width: 100%;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255,255,255,0.16);
+      background: radial-gradient(circle at 0 0, rgba(255,255,255,0.06), transparent 55%),
+                  rgba(7, 5, 23, 0.95);
+      padding: 9px 10px;
+      font-size: 0.92rem;
+      color: var(--fg);
+      outline: none;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
+    }
+
+    select:focus,
+    input:focus {
+      border-color: var(--accent-soft);
+      box-shadow: 0 0 0 1px rgba(255,184,92,0.55);
+      transform: translateY(-1px);
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* BUTTONS */
+    button {
+      font-family: inherit;
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: none;
+      padding: 9px 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #05030f;
+      background: linear-gradient(135deg, var(--accent), var(--accent-soft));
+      box-shadow: 0 14px 30px rgba(255, 107, 74, 0.55);
+      transition: transform var(--transition-med), box-shadow var(--transition-med), filter var(--transition-med);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, rgba(255,255,255,0.2), transparent 55%, rgba(255,255,255,0.25));
+      opacity: 0;
+      transition: opacity 0.25s ease-out;
+      pointer-events: none;
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-1px) scale(1.01);
+      box-shadow: 0 18px 40px rgba(255, 107, 74, 0.65);
+      filter: brightness(1.03);
+    }
+    .btn:hover:not(:disabled)::after {
+      opacity: 1;
+    }
+
+    .btn:active:not(:disabled) {
+      transform: translateY(0) scale(0.99);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.8);
+    }
+
+    .btn.secondary {
+      background: rgba(255,255,255,0.05);
+      color: var(--fg);
+      box-shadow: none;
+      border: 1px solid rgba(255,255,255,0.16);
+    }
+
+    .btn.secondary:hover:not(:disabled) {
+      box-shadow: 0 16px 32px rgba(0,0,0,0.7);
+    }
+
+    .btn.inline {
+      padding-inline: 14px;
+      font-size: 0.78rem;
+    }
+
+    .btn[disabled] {
+      opacity: 0.5;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .btn-full {
+      width: 100%;
+      justify-content: center;
+      margin-top: 6px;
+    }
+
+    /* PROGRESS BAR */
+    .progress-wrap {
+      margin-top: 6px;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent), var(--accent-soft));
+      transition: width 0.2s ease-out;
+    }
+
+    /* PLAYER INPUTS */
+    .player-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    @media (max-width: 600px) {
+      .player-inputs {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .player-inputs input {
+      font-size: 0.86rem;
+    }
+
+    /* VOTE BUTTONS */
+    .vote-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .vote-btn {
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 0.84rem;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(9, 6, 30, 0.95);
+      color: var(--fg);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .vote-btn span.dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, var(--accent-soft), var(--accent));
+    }
+
+    .vote-btn:hover:not(.disabled),
+    .vote-btn:focus-visible:not(.disabled) {
+      background: rgba(255,255,255,0.08);
+      border-color: var(--accent-soft);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 18px rgba(0,0,0,0.7);
+      outline: none;
+    }
+
+    .vote-btn.selected {
+      background: linear-gradient(135deg, var(--accent), var(--accent-soft));
+      border-color: rgba(0,0,0,0.7);
+      color: #05030f;
+      box-shadow: 0 10px 26px rgba(0,0,0,0.85);
+    }
+
+    .vote-btn.disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    /* SCOREBOARD */
+    .score-list {
+      list-style: none;
+      margin: 6px 0 0;
+      padding: 0;
+      font-size: 0.9rem;
+    }
+
+    .score-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 5px 0;
+      border-bottom: 1px dashed rgba(255,255,255,0.08);
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border: 1px solid rgba(255,255,255,0.16);
+      color: var(--muted);
+    }
+    .pill.green {
+      border-color: rgba(52, 211, 153, 0.6);
+      color: var(--success);
+    }
+    .pill.red {
+      border-color: rgba(239, 68, 68, 0.7);
+      color: var(--danger);
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .center {
+      text-align: center;
+    }
+
+    /* ASIDE PANEL */
+    .aside-section {
+      background: rgba(8, 5, 40, 0.9);
+      border-radius: 18px;
+      padding: 12px 13px;
+      border: 1px solid rgba(255,255,255,0.09);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .aside-section h4 {
+      margin: 0 0 4px;
+      font-size: 0.82rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.92);
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+
+    .aside-section p {
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      padding: 3px 9px;
+      font-size: 0.74rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .music-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.78rem;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(6, 4, 30, 0.9);
+      color: var(--muted);
+      cursor: pointer;
+      transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .music-toggle span.icon {
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, var(--accent-soft), var(--accent));
+    }
+
+    .music-toggle.on {
+      color: var(--fg);
+      border-color: rgba(255,184,92,0.8);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.8);
+      transform: translateY(-1px);
+    }
+
+    .music-toggle:active {
+      transform: translateY(0);
+      box-shadow: 0 6px 15px rgba(0,0,0,0.85);
+    }
+
+    .timer-display {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .timer-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #34d399, #059669);
+      box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.2);
+      animation: pulse 1.2s ease-out infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(1.45); opacity: 0; }
+    }
+
+    /* Staggered reveal */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(8px);
+      animation: fadeUp 0.5s ease-out forwards;
+    }
+    .fade-up.delay-1 { animation-delay: 0.06s; }
+    .fade-up.delay-2 { animation-delay: 0.12s; }
+    .fade-up.delay-3 { animation-delay: 0.18s; }
+    .fade-up.delay-4 { animation-delay: 0.24s; }
+
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell" role="main" aria-live="polite" aria-atomic="true">
+    <!-- MAIN COLUMN -->
+    <div class="app-main">
+      <header class="app-header fade-up">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"></div>
+          <div class="brand-text">
+            <h1>Imposter Party</h1>
+            <span>Browser social deduction</span>
+          </div>
+        </div>
+        <div class="chip">
+          <span class="chip-dot"></span>
+          Local&nbsp;Play
+        </div>
+      </header>
+
+      <!-- SETUP SCREEN -->
+      <section id="screen-setup" class="screen active fade-up delay-1" aria-label="Game setup">
+        <div class="card-panel">
+          <div class="card-header">
+            <h2>Game Setup</h2>
+            <span class="sub">Choose topic &amp; players</span>
+          </div>
+
+          <div class="field">
+            <label for="categorySelect">Category</label>
+            <select id="categorySelect" aria-describedby="categoryHelp">
+              <!-- Populated by JS -->
+            </select>
+            <small id="categoryHelp">Pick a category for the secret topic.</small>
+          </div>
+
+          <div id="customCategoryContainer" class="field" style="display:none;">
+            <label for="customCategoryInput">Custom category</label>
+            <input type="text" id="customCategoryInput" placeholder="e.g. Space Exploration" autocomplete="off" />
+            <small>We'll generate 20 simple placeholders like &ldquo;Space Item 1&rdquo; etc.</small>
+            <button id="generateCustomBtn" class="btn inline" type="button" disabled>Generate</button>
+            <div id="customLoading" class="muted" style="display:none;margin-top:4px;">Generating fake items...</div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="numPlayers">Players</label>
+              <input type="number" id="numPlayers" value="4" min="3" max="12" />
+              <small>3–12 players.</small>
+            </div>
+            <div class="field">
+              <label for="numImposters">Imposters</label>
+              <input type="number" id="numImposters" value="1" min="1" max="4" />
+              <small>At least 1, fewer than players.</small>
+            </div>
+          </div>
+
+          <button id="nextBtn" class="btn btn-full" type="button" disabled>
+            Next &mdash; add player names
+          </button>
+        </div>
+      </section>
+
+      <!-- PLAYER NAMES SCREEN -->
+      <section id="screen-players" class="screen fade-up delay-1" aria-label="Player names">
+        <div class="card-panel">
+          <div class="card-header">
+            <h2>Players</h2>
+            <span class="sub">Name everyone around you</span>
+          </div>
+
+          <form id="playerForm" novalidate>
+            <div class="player-inputs" id="playerInputs"></div>
+            <div class="field">
+              <small class="muted">Tip: use nicknames everyone recognizes.</small>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:4px;">
+              <button type="button" id="backToSetupBtn" class="btn secondary" style="flex:1;">
+                Back
+              </button>
+              <button type="submit" id="startBtn" class="btn" style="flex:2;" disabled>
+                Start role reveal
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- REVEAL SCREEN -->
+      <section id="screen-reveal" class="screen fade-up delay-1 center" aria-label="Reveal roles">
+        <div class="card-panel">
+          <div class="card-header">
+            <h2>Role Reveal</h2>
+            <span class="sub">Pass the device around</span>
+          </div>
+
+          <p id="revealHint" class="muted">
+            Hand the screen to the next player, let them peek, then tap &ldquo;Next Player&rdquo;.
+          </p>
+
+          <div id="revealText" style="font-size:1.05rem;font-weight:600;margin:10px 0 12px;">
+            Tap &ldquo;Next Player&rdquo; to assign roles.
+          </div>
+
+          <div class="progress-wrap">
+            <div class="progress-label">
+              <span>Reveal progress</span>
+              <span id="revealCountLabel">0 / 0</span>
+            </div>
+            <div class="progress-bar" aria-hidden="true">
+              <div class="progress-bar-fill" id="revealProgress"></div>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:8px; margin-top:10px;">
+            <button id="redoBtn" class="btn secondary" type="button" disabled>
+              Redo last
+            </button>
+            <button id="nextPlayerBtn" class="btn" type="button">
+              Next player
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- VOTING SCREEN -->
+      <section id="screen-vote" class="screen fade-up delay-1" aria-label="Voting">
+        <div class="card-panel">
+          <div class="card-header">
+            <h2>Vote</h2>
+            <span class="sub">Who feels sus?</span>
+          </div>
+
+          <div id="voteTitle" style="font-size:0.96rem;font-weight:600;margin-bottom:6px;">
+            Voting...
+          </div>
+
+          <div class="vote-grid" id="voteOptions" role="list"></div>
+
+          <div class="progress-wrap" style="margin-top:10px;">
+            <div class="progress-label">
+              <span>Voting order</span>
+              <span id="voteCountLabel">0 / 0</span>
+            </div>
+            <div class="progress-bar" aria-hidden="true">
+              <div class="progress-bar-fill" id="voteProgress"></div>
+            </div>
+          </div>
+
+          <button id="submitVoteBtn" class="btn btn-full" type="button" disabled>
+            Lock in vote
+          </button>
+        </div>
+      </section>
+
+      <!-- SCOREBOARD SCREEN -->
+      <section id="screen-score" class="screen fade-up delay-1" aria-label="Scoreboard">
+        <div class="card-panel">
+          <div class="card-header">
+            <h2>Scoreboard</h2>
+            <span class="sub">Track your chaos</span>
+          </div>
+
+          <ul id="scoreList" class="score-list"></ul>
+
+          <div style="display:flex; gap:8px; margin-top:10px;">
+            <button id="nextRoundBtn" class="btn secondary" type="button">
+              Same topic, new round
+            </button>
+            <button id="changeTopicBtn" class="btn" type="button">
+              New topic
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ASIDE COLUMN -->
+    <aside class="app-aside">
+      <div class="aside-section fade-up delay-1">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <h4>Round status</h4>
+          <span id="roundBadge" class="pill">Setup</span>
+        </div>
+        <p id="topicInfo">Pick a category to begin.</p>
+      </div>
+
+      <div class="aside-section fade-up delay-2">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <h4>Ambient Lo-fi</h4>
+          <button id="muteBtn" class="music-toggle" type="button" aria-label="Toggle background music">
+            <span class="icon" aria-hidden="true"></span>
+            <span id="muteLabel">Off</span>
+          </button>
+        </div>
+        <p>Soft background beats for maximum deception and minimum stress.</p>
+        <audio id="lofi" loop playsinline preload="auto">
+          <!-- tiny inline tone as fallback -->
+          <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=" type="audio/wav">
+        </audio>
+      </div>
+
+      <div class="aside-section fade-up delay-3">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <h4>Flow</h4>
+          <span class="badge">
+            <span class="chip-dot"></span>
+            4 phases
+          </span>
+        </div>
+        <p style="margin-bottom:6px;">
+          1. Setup &middot; 2. Names &middot; 3. Role Reveal &middot; 4. Vote &amp; score.
+        </p>
+        <div class="timer-display">
+          <span class="timer-dot" aria-hidden="true"></span>
+          <span id="phaseLabel">Setup phase</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    // Entire game logic in one script
+    document.addEventListener('DOMContentLoaded', () => {
+      /* DOM REFERENCES */
+      const screens = {
+        setup: document.getElementById('screen-setup'),
+        players: document.getElementById('screen-players'),
+        reveal: document.getElementById('screen-reveal'),
+        vote: document.getElementById('screen-vote'),
+        score: document.getElementById('screen-score'),
+      };
+
+      const categorySelect = document.getElementById('categorySelect');
+      const numPlayersInput = document.getElementById('numPlayers');
+      const numImpostersInput = document.getElementById('numImposters');
+      const nextBtn = document.getElementById('nextBtn');
+
+      const customCategoryContainer = document.getElementById('customCategoryContainer');
+      const customCategoryInput = document.getElementById('customCategoryInput');
+      const generateCustomBtn = document.getElementById('generateCustomBtn');
+      const customLoading = document.getElementById('customLoading');
+
+      const playerForm = document.getElementById('playerForm');
+      const playerInputsContainer = document.getElementById('playerInputs');
+      const startBtn = document.getElementById('startBtn');
+      const backToSetupBtn = document.getElementById('backToSetupBtn');
+
+      const revealText = document.getElementById('revealText');
+      const revealHint = document.getElementById('revealHint');
+      const revealProgress = document.getElementById('revealProgress');
+      const revealCountLabel = document.getElementById('revealCountLabel');
+      const nextPlayerBtn = document.getElementById('nextPlayerBtn');
+      const redoBtn = document.getElementById('redoBtn');
+
+      const voteTitle = document.getElementById('voteTitle');
+      const voteOptions = document.getElementById('voteOptions');
+      const submitVoteBtn = document.getElementById('submitVoteBtn');
+      const voteProgress = document.getElementById('voteProgress');
+      const voteCountLabel = document.getElementById('voteCountLabel');
+
+      const scoreList = document.getElementById('scoreList');
+      const nextRoundBtn = document.getElementById('nextRoundBtn');
+      const changeTopicBtn = document.getElementById('changeTopicBtn');
+
+      const roundBadge = document.getElementById('roundBadge');
+      const topicInfo = document.getElementById('topicInfo');
+      const phaseLabel = document.getElementById('phaseLabel');
+
+      const lofi = document.getElementById('lofi');
+      const muteBtn = document.getElementById('muteBtn');
+      const muteLabel = document.getElementById('muteLabel');
+
+      /* GAME STATE */
+      const topicsData = {
+        "NBA Stars": ["LeBron James", "Stephen Curry", "Kawhi Leonard", "Giannis Antetokounmpo", "Kevin Durant", "James Harden", "Anthony Davis", "Joel Embiid", "Luka Doncic", "Zion Williamson", "Jayson Tatum", "Damian Lillard", "Trae Young", "Karl-Anthony Towns", "Bradley Beal", "Devin Booker", "Jimmy Butler", "Chris Paul", "Russell Westbrook", "Ben Simmons", "Kyrie Irving", "Paul George", "Klay Thompson", "Draymond Green", "Rudy Gobert", "Donovan Mitchell", "Nikola Jokic", "Julius Randle", "Ja Morant", "DeMar DeRozan", "Fred VanVleet", "Bam Adebayo", "Tyler Herro", "Jaren Jackson Jr.", "Jaylen Brown", "Domantas Sabonis", "CJ McCollum", "Pascal Siakam", "Zach LaVine", "Michael Jordan", "Kobe Bryant", "Shaquille O'Neal", "Magic Johnson", "Larry Bird", "Tim Duncan", "Hakeem Olajuwon", "Allen Iverson", "Charles Barkley", "Karl Malone", "John Stockton", "Scottie Pippen", "Patrick Ewing", "Derrick Rose", "Lakers", "Bulls", "Celtics", "Warriors", "Heat", "Spurs", "Nets", "Raptors"],
+        "Movies": ["The Godfather", "Inception", "Titanic", "The Matrix", "Avengers", "Pulp Fiction", "Forrest Gump", "Gladiator", "Interstellar", "Parasite", "Joker", "The Dark Knight", "Schindler's List", "Fight Club", "The Lord of the Rings", "Harry Potter", "The Lion King", "Frozen", "Toy Story", "The Social Network", "Inglourious Basterds", "Whiplash", "La La Land", "Coco", "The Shining", "A Clockwork Orange", "Jurassic Park", "Star Wars", "Guardians of the Galaxy", "Black Panther", "Avengers: Endgame", "Mad Max: Fury Road", "The Departed", "The Prestige", "Django Unchained", "The Silence of the Lambs", "Braveheart", "Goodfellas", "The Revenant", "Once Upon a Time in Hollywood", "Catch Me If You Can", "No Country for Old Men", "The Sixth Sense", "Up", "Inside Out", "WALL-E", "Shutter Island", "12 Years a Slave"],
+        "Video Games": ["Mario", "Link", "Lara Croft", "Kratos", "Samus", "Geralt", "Master Chief", "Sonic", "Pac-Man", "Mega Man", "Solid Snake", "Cloud Strife", "Leon Kennedy", "Ezio Auditore", "Doom Slayer", "Arthur Morgan", "Spyro", "Crash Bandicoot", "Kirby", "Donkey Kong", "Ryu", "Chun-Li", "Sub-Zero", "Scorpion", "Master Sword", "Energy Sword", "Buster Sword", "Keyblade", "Portal Gun", "Blaster", "Lancer", "Gravity Gun", "Glaive", "Sword of Omens", "Lightsaber", "Gunblade", "Dragon Slayer", "Dragonborn Sword", "Hidden Blade", "Masamune", "Final Fantasy Series", "Resident Evil Series", "Halo Series", "Legend of Zelda Series"],
+  "Anime": ["Naruto", "Goku", "Luffy", "Ichigo", "One Punch Man", "Sailor Moon", "Edward Elric", "Levi Ackerman", "Light Yagami", "Gon Freecss", "Eren Yeager", "Mikasa Ackerman", "Tanjiro Kamado", "Nezuko Kamado", "Saitama", "Koro-sensei", "Gintoki Sakata", "Spike Spiegel", "Vash the Stampede", "Yusuke Urameshi", "Inuyasha", "Kenshin Himura", "Totoro", "Natsu Dragneel", "Lucy Heartfilia", "Gray Fullbuster", "Erza Scarlet", "Shoyo Hinata", "Kageyama Tobio", "Shikamaru Nara", "Kakashi Hatake", "Madara Uchiha", "Itachi Uchiha", "Roronoa Zoro", "Sanji", "Monkey D. Garp", "Kenshiro", "Alphonse Elric", "Roy Mustang", "Sailor Venus", "Sailor Jupiter", "Bulma", "Vegeta", "Kurapika", "Killua Zoldyck", "Yugi Muto", "JoJo Series", "Naruto Series", "Dragon Ball Series", "One Piece Series", "Bleach Series", "Attack on Titan Series"],
+  "Rappers": ["Kendrick Lamar", "Drake", "J. Cole", "Kanye West", "Nicki Minaj", "Eminem", "Tupac", "Biggie", "Jay-Z", "Snoop Dogg", "Nas", "Ice Cube", "Travis Scott", "Megan Thee Stallion", "Lil Wayne", "Cardi B", "Future", "Doja Cat", "Lil Baby", "Dr. Dre", "2 Chainz", "Rakim", "Big Pun", "LL Cool J", "Q-Tip", "Busta Rhymes", "Missy Elliott", "Method Man", "Redman", "Killer Mike", "Juice WRLD", "21 Savage", "Lil Uzi Vert", "Pop Smoke", "Tyler, The Creator", "A$AP Rocky", "Jadakiss", "DMX", "Common", "The Notorious B.I.G.", "T.I.", "Young Thug", "Mac Miller", "Wale", "Logic", "Chance the Rapper", "Andre 3000", "E-40", "Schoolboy Q", "Too $hort"]
+}
+
+
+      let currentCategory = "";
+      let customTopics = null;
+      let secretTopic = "";
+      let playerNames = [];
+      let imposters = [];      // array of indexes
+      let scores = {};
+      let revealStep = 0;      // 0 = pre, then 1..N players, >N = move to vote
+      let lastRevealIndex = null;
+
+      let currentVoterIndex = 0;
+      let votes = [];
+
+      let revealTimeoutId = null;
+
+      /* HELPERS */
+      function showScreen(name) {
+        Object.values(screens).forEach(s => s.classList.remove('active'));
+        screens[name].classList.add('active');
+        switch (name) {
+          case 'setup':
+            roundBadge.textContent = "Setup";
+            phaseLabel.textContent = "Setup phase";
+            break;
+          case 'players':
+            roundBadge.textContent = "Players";
+            phaseLabel.textContent = "Name entry";
+            break;
+          case 'reveal':
+            roundBadge.textContent = "Reveal";
+            phaseLabel.textContent = "Role peek";
+            break;
+          case 'vote':
+            roundBadge.textContent = "Vote";
+            phaseLabel.textContent = "Accusations";
+            break;
+          case 'score':
+            roundBadge.textContent = "Score";
+            phaseLabel.textContent = "Results";
+            break;
+        }
+      }
+
+      function sanitize(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.textContent;
+      }
+
+      function updateSetupButtonState() {
+        const numPlayers = parseInt(numPlayersInput.value, 10);
+        const numImposters = parseInt(numImpostersInput.value, 10);
+        const category = categorySelect.value;
+
+        const validPlayers = !isNaN(numPlayers) && numPlayers >= 3 && numPlayers <= 12;
+        const validImposters = !isNaN(numImposters) && numImposters >= 1 && numImposters < numPlayers;
+
+        let categoryReady = !!category;
+        if (category === "Custom") {
+          categoryReady = customTopics && customTopics.length > 0;
+        }
+
+        nextBtn.disabled = !(validPlayers && validImposters && categoryReady);
+      }
+
+      function regeneratePlayerInputs() {
+        playerInputsContainer.innerHTML = "";
+        const numPlayers = parseInt(numPlayersInput.value, 10);
+        for (let i = 0; i < numPlayers; i++) {
+          const input = document.createElement('input');
+          input.type = "text";
+          input.placeholder = `Player ${i + 1}`;
+          input.autocomplete = "off";
+          input.required = true;
+          playerInputsContainer.appendChild(input);
+        }
+        validatePlayerNames();
+      }
+
+      function validatePlayerNames() {
+        const inputs = playerInputsContainer.querySelectorAll('input[type="text"]');
+        if (!inputs.length) {
+          startBtn.disabled = true;
+          return;
+        }
+        const allFilled = Array.from(inputs).every(inp => inp.value.trim().length > 0);
+        startBtn.disabled = !allFilled;
+      }
+
+      function assignImposters() {
+        imposters = [];
+        const numPlayers = playerNames.length;
+        const requestedImposters = Math.min(
+          parseInt(numImpostersInput.value, 10),
+          numPlayers - 1
+        );
+        while (imposters.length < requestedImposters) {
+          const idx = Math.floor(Math.random() * numPlayers);
+          if (!imposters.includes(idx)) {
+            imposters.push(idx);
+          }
+        }
+      }
+
+      function pickTopic() {
+        if (currentCategory === "Custom" && customTopics) {
+          secretTopic = customTopics[Math.floor(Math.random() * customTopics.length)];
+        } else {
+          const list = topicsData[currentCategory];
+          secretTopic = list[Math.floor(Math.random() * list.length)];
+        }
+        topicInfo.textContent = `Secret topic selected from “${currentCategory}”. Non-imposters will see: ${secretTopic}`;
+      }
+
+      function updateRevealProgress() {
+        const total = playerNames.length;
+        const shown = Math.min(revealStep, total);
+        revealCountLabel.textContent = `${shown} / ${total}`;
+        const percent = total === 0 ? 0 : (shown / total) * 100;
+        revealProgress.style.width = `${percent}%`;
+      }
+
+      function startRevealPhase() {
+        revealStep = 0;
+        lastRevealIndex = null;
+        revealText.textContent = "Tap “Next player” to assign roles.";
+        revealHint.style.display = "block";
+        redoBtn.disabled = true;
+        updateRevealProgress();
+        showScreen('reveal');
+      }
+
+      function revealNextPlayer() {
+        if (revealTimeoutId) {
+          clearTimeout(revealTimeoutId);
+          revealTimeoutId = null;
+        }
+
+        const totalPlayers = playerNames.length;
+
+        // Initial call: assign imposters & topic
+        if (revealStep === 0) {
+          assignImposters();
+          pickTopic();
+          revealStep = 1;
+        }
+
+        if (revealStep > totalPlayers) {
+          // Everyone viewed; move to voting
+          startVotingPhase();
+          return;
+        }
+
+        const idx = revealStep - 1;
+        const name = playerNames[idx];
+
+        // Disable Next Player button while showing reveal
+        nextPlayerBtn.disabled = true;
+
+        if (imposters.includes(idx)) {
+          revealText.textContent = `${sanitize(name)}, you are the IMPOSTER. Pretend you know the topic.`;
+        } else {
+          revealText.textContent = `${sanitize(name)}, your secret topic is: ${sanitize(secretTopic)}. Don't say it out loud.`;
+        }
+
+        revealHint.textContent = "Let this player read, then wait...";
+
+        lastRevealIndex = idx;
+        revealStep += 1;
+        redoBtn.disabled = revealStep <= 2; // can't redo first reveal
+        updateRevealProgress();
+
+        // After 3 seconds, hide the reveal text and enable the button
+        revealTimeoutId = setTimeout(() => {
+          revealText.textContent = "Pass the device to the next player and tap “Next player”.";
+          revealHint.textContent = "";
+          nextPlayerBtn.disabled = false;
+          revealTimeoutId = null;
+        }, 3000);
+      }
+
+      function redoLastReveal() {
+        if (revealTimeoutId) {
+          clearTimeout(revealTimeoutId);
+          revealTimeoutId = null;
+        }
+        if (lastRevealIndex === null) return;
+        revealStep = lastRevealIndex + 1; // because revealStep is index+1
+        revealNextPlayer();
+      }
+
+      function startVotingPhase() {
+        showScreen('vote');
+        currentVoterIndex = 0;
+        votes = [];
+        submitVoteBtn.disabled = true;
+        updateVoteUI();
+      }
+
+      function updateVoteUI() {
+        const totalPlayers = playerNames.length;
+        if (currentVoterIndex >= totalPlayers) {
+          tallyVotes();
+          return;
+        }
+
+        const voterName = playerNames[currentVoterIndex];
+        voteTitle.textContent = `${voterName}, who do you want to eliminate?`;
+        voteOptions.innerHTML = "";
+
+        playerNames.forEach((name, idx) => {
+          if (idx === currentVoterIndex) return; // can't vote self
+          const btn = document.createElement('button');
+          btn.type = "button";
+          btn.className = "vote-btn";
+          btn.setAttribute('data-index', idx.toString());
+          btn.innerHTML = `<span class="dot"></span>${sanitize(name)}`;
+          btn.addEventListener('click', () => {
+            voteOptions.querySelectorAll('.vote-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            submitVoteBtn.disabled = false;
+          });
+          voteOptions.appendChild(btn);
+        });
+
+        voteCountLabel.textContent = `${currentVoterIndex + 1} / ${totalPlayers}`;
+        const percent = ((currentVoterIndex) / totalPlayers) * 100;
+        voteProgress.style.width = `${percent}%`;
+        submitVoteBtn.disabled = true;
+      }
+
+      function submitCurrentVote() {
+        const selected = voteOptions.querySelector('.vote-btn.selected');
+        if (!selected) return;
+        const targetIdx = parseInt(selected.getAttribute('data-index'), 10);
+        votes.push(targetIdx);
+        currentVoterIndex += 1;
+        updateVoteUI();
+      }
+
+      function tallyVotes() {
+  const counts = {};
+  votes.forEach(idx => {
+    counts[idx] = (counts[idx] || 0) + 1;
+  });
+
+  let maxVotes = 0;
+  let eliminatedIndexes = [];
+  Object.entries(counts).forEach(([idxStr, count]) => {
+    const idx = parseInt(idxStr, 10);
+    if (count > maxVotes) {
+      maxVotes = count;
+      eliminatedIndexes = [idx];
+    } else if (count === maxVotes) {
+      eliminatedIndexes.push(idx);
+    }
+  });
+
+  let summaryText = "";
+
+  if (eliminatedIndexes.length === 1) {
+    const elimIdx = eliminatedIndexes[0];
+    const elimName = playerNames[elimIdx];
+    const elimWasImposter = imposters.includes(elimIdx);
+    summaryText = `${elimName} was eliminated. `;
+
+    if (elimWasImposter) {
+      // Award points only to players who voted for the imposter
+      summaryText += "They WERE an imposter. Voters gain 1 point.";
+      votes.forEach((votedIdx, voterIdx) => {
+        if (votedIdx === elimIdx) {
+          const voterName = playerNames[voterIdx];
+          scores[voterName] = (scores[voterName] || 0) + 1;
+        }
+      });
+    } else {
+      summaryText += "They were innocent. Imposters gain 1 point.";
+      imposters.forEach(i => {
+        scores[playerNames[i]] = (scores[playerNames[i]] || 0) + 1;
+      });
+    }
+  } else if (eliminatedIndexes.length > 1) {
+    summaryText = "The vote was tied. No one is eliminated this round.";
+  } else {
+    summaryText = "No votes were cast. Chaos!";
+  }
+
+  showScoreboard(summaryText);
+}
+
+      function showScoreboard(summaryText) {
+        showScreen('score');
+        scoreList.innerHTML = "";
+
+        if (summaryText) {
+          const liSummary = document.createElement('li');
+          liSummary.style.borderBottom = "none";
+          liSummary.innerHTML = `<span class="muted">${sanitize(summaryText)}</span>`;
+          scoreList.appendChild(liSummary);
+        }
+
+        playerNames.forEach((name, idx) => {
+          const li = document.createElement('li');
+          const left = document.createElement('span');
+          const right = document.createElement('span');
+          left.textContent = name;
+
+          const scoreVal = scores[name] || 0;
+          const pill = document.createElement('span');
+          pill.className = "pill " + (imposters.includes(idx) ? "red" : "green");
+          pill.textContent = `${scoreVal} pt${scoreVal === 1 ? "" : "s"}`;
+          right.appendChild(pill);
+
+          li.appendChild(left);
+          li.appendChild(right);
+          scoreList.appendChild(li);
+        });
+      }
+
+      function resetForNewRound(sameTopic) {
+        votes = [];
+        currentVoterIndex = 0;
+        revealStep = 0;
+        lastRevealIndex = null;
+        if (!sameTopic) {
+          secretTopic = "";
+          topicInfo.textContent = "Pick a category to begin.";
+          showScreen('setup');
+        } else {
+          startRevealPhase();
+        }
+      }
+
+      /* EVENTS */
+
+      // Populate category select
+      (function initCategories() {
+        const fragment = document.createDocumentFragment();
+        Object.keys(topicsData).forEach(cat => {
+          const opt = document.createElement('option');
+          opt.value = cat;
+          opt.textContent = cat;
+          fragment.appendChild(opt);
+        });
+        const customOpt = document.createElement('option');
+        customOpt.value = "Custom";
+        customOpt.textContent = "Custom category…";
+        fragment.appendChild(customOpt);
+        const placeholder = document.createElement('option');
+        placeholder.value = "";
+        placeholder.textContent = "Select category…";
+        placeholder.disabled = true;
+        placeholder.selected = true;
+        categorySelect.appendChild(placeholder);
+        categorySelect.appendChild(fragment);
+      })();
+
+      categorySelect.addEventListener('change', () => {
+        currentCategory = categorySelect.value;
+        if (currentCategory === "Custom") {
+          customCategoryContainer.style.display = "block";
+          topicInfo.textContent = "Describe any topic. We'll create placeholder items.";
+        } else {
+          customCategoryContainer.style.display = "none";
+          customTopics = null;
+          topicInfo.textContent = `You chose “${currentCategory}”. We'll pick a secret item from this.`;
+        }
+        updateSetupButtonState();
+      });
+
+      customCategoryInput.addEventListener('input', () => {
+        const value = customCategoryInput.value.trim();
+        generateCustomBtn.disabled = value.length < 3;
+      });
+
+      generateCustomBtn.addEventListener('click', () => {
+        const base = customCategoryInput.value.trim();
+        if (base.length < 3) return;
+        customLoading.style.display = "block";
+        generateCustomBtn.disabled = true;
+        customTopics = null;
+        // simulate async "generation"
+        setTimeout(() => {
+          const list = [];
+          for (let i = 1; i <= 20; i++) {
+            list.push(`${base} item ${i}`);
+          }
+          customTopics = list;
+          customLoading.style.display = "none";
+          topicInfo.textContent = `Custom topic: “${base}”. We'll pick a random generated item.`;
+          updateSetupButtonState();
+        }, 1200);
+      });
+
+      [numPlayersInput, numImpostersInput].forEach(input => {
+        input.addEventListener('input', () => {
+          updateSetupButtonState();
+        });
+      });
+
+      nextBtn.addEventListener('click', () => {
+        regeneratePlayerInputs();
+        showScreen('players');
+      });
+
+      playerInputsContainer.addEventListener('input', validatePlayerNames);
+
+      backToSetupBtn.addEventListener('click', () => {
+        showScreen('setup');
+      });
+
+      playerForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const inputs = playerInputsContainer.querySelectorAll('input[type="text"]');
+        const names = Array.from(inputs).map(inp => inp.value.trim()).filter(Boolean);
+        if (names.length < 3) {
+          alert("Need at least 3 players with names.");
+          return;
+        }
+        playerNames = names;
+        scores = {};
+        playerNames.forEach(n => { scores[n] = scores[n] || 0; });
+        startRevealPhase();
+      });
+
+      nextPlayerBtn.addEventListener('click', () => {
+        revealNextPlayer();
+      });
+
+      redoBtn.addEventListener('click', () => {
+        redoLastReveal();
+      });
+
+      submitVoteBtn.addEventListener('click', () => {
+        submitCurrentVote();
+      });
+
+      nextRoundBtn.addEventListener('click', () => {
+        resetForNewRound(true);
+      });
+
+      changeTopicBtn.addEventListener('click', () => {
+        resetForNewRound(false);
+      });
+
+      // Music toggle
+      let musicOn = false;
+      function ensureAudioUnlocked() {
+        if (!musicOn) return;
+        lofi.play().catch(() => {});
+        document.removeEventListener('click', ensureAudioUnlocked);
+        document.removeEventListener('touchstart', ensureAudioUnlocked);
+      }
+
+      muteBtn.addEventListener('click', () => {
+        musicOn = !musicOn;
+        if (musicOn) {
+          lofi.muted = false;
+          lofi.play().catch(() => {});
+          muteLabel.textContent = "On";
+          muteBtn.classList.add('on');
+          document.addEventListener('click', ensureAudioUnlocked);
+          document.addEventListener('touchstart', ensureAudioUnlocked);
+        } else {
+          lofi.pause();
+          muteLabel.textContent = "Off";
+          muteBtn.classList.remove('on');
+        }
+      });
+
+      // Initial state
+      updateSetupButtonState();
+    });
+  </script>
+</body>
+</html>
