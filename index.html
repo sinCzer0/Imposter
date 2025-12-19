@@ -1017,6 +1017,32 @@
   ]
 
 };
+// --- Populate category dropdown ---
+Object.keys(topicsData).forEach(category => {
+  const option = document.createElement('option');
+  option.value = category;
+  option.textContent = category;
+  categorySelect.appendChild(option);
+});
+
+// Add custom category option at the end
+const customOption = document.createElement('option');
+customOption.value = "Custom";
+customOption.textContent = "Custom…";
+categorySelect.appendChild(customOption);
+
+// Listen for category changes
+categorySelect.addEventListener('change', () => {
+  currentCategory = categorySelect.value;
+  if (currentCategory === "Custom") {
+    customCategoryContainer.style.display = "block";
+    generateCustomBtn.disabled = !customCategoryInput.value.trim();
+  } else {
+    customCategoryContainer.style.display = "none";
+    customTopics = null;
+  }
+  updateSetupButtonState();
+});
 
       let currentCategory = "";
       let customTopics = null;
